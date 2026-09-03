@@ -1,0 +1,40 @@
+# Core
+numpy>=1.26.0
+pandas>=2.1.0
+scipy>=1.11.0
+
+# Machine Learning
+scikit-learn>=1.4.0
+xgboost>=2.0.0
+lightgbm>=4.3.0
+catboost>=1.2.0
+
+# Imbalanced Learning
+imbalanced-learn>=0.12.0
+
+# Fairness
+fairlearn>=0.10.0
+
+# Explainability
+shap>=0.45.0
+
+# Visualization
+matplotlib>=3.8.0
+seaborn>=0.13.0
+plotly>=5.20.0
+
+# Deep Learning
+torch>=2.2.0
+pytorch-tabnet>=4.1.0
+
+# Dashboard
+streamlit>=1.32.0
+
+# Utilities
+joblib>=1.3.0
+tqdm>=4.66.0
+pyyaml>=6.0.1
+
+# Experiment Tracking / Config
+jupyter>=1.0.0
+ipykernel>=6.29.0
