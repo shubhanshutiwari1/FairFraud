@@ -1,0 +1,11 @@
+Check,Result
+Total Rows,1000000.0
+Total Columns,32.0
+Missing Values,0.0
+Duplicate Rows,0.0
+Constant Features,0.0
+Infinite Values,0.0
+Fraud Cases,11029.0
+Non-Fraud Cases,988971.0
+Fraud Rate (%),1.1029
+Imbalance Ratio,89.67

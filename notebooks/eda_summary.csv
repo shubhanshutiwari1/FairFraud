@@ -1,0 +1,12 @@
+Metric,Value
+Total Samples,1000000
+Total Features,32
+Numerical Features,26
+Categorical Features,5
+Missing Values,0
+Duplicate Rows,0
+Fraud Cases,11029
+Non-Fraud Cases,988971
+Fraud Percentage,1.103
+Age Range,10 - 90
+Time Period Range,0 - 7
