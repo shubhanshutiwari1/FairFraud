@@ -2,10 +2,10 @@
 
 An **Explainable, Fairness-Aware Fraud Detection System** with Novel Algorithmic Enhancements on the NeurIPS BAF Benchmark.
 
-## 📌 Project Overview
+## Project Overview
 FairFraud is designed to detect financial fraud while ensuring fairness and transparency across diverse demographic groups. Utilizing the NeurIPS Bank Account Fraud (BAF) benchmark suite, this repository implements advanced machine learning techniques to optimize fairness-accuracy trade-offs alongside integrated explainable AI (XAI) tools.
 
-## 📂 Repository Structure
+## Repository Structure
 ```text
 ├── backend/          # Web application server and API logic
 ├── data/             # NeurIPS benchmark dataset
@@ -18,7 +18,7 @@ FairFraud is designed to detect financial fraud while ensuring fairness and tran
 └── requirements.txt  # Project Python dependencies
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 Make sure you have Python 3.11+ installed on system.
@@ -48,7 +48,7 @@ pip install -r requirements.txt
 ### 3. Model Management
 All trained predictive models are stored inside the `models/` directory at the project root. The backend application automatically pulls active checkpoints from this folder during live inference.
 
-## 💻 Running the Web Application
+## Running the Web Application
 
 To spin up the system, launch the web server directly from the `backend/` application scope.
 
