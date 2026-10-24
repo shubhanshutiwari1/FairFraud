@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FairFraud — Explainable Fairness-Aware Fraud Detection</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    .form-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .form-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .form-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .nav-item.active {
+      color: #0f172a;
+      border-bottom-color: #0f172a;
+    }
+    input[type="number"], select {
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: #1d4ed8;
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <!-- ==================== NAVIGATION BAR ==================== -->
+  <header class="sticky top-0 z-40 bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <a href="#home" class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded bg-slate-900 text-white flex items-center justify-center text-xs font-bold tracking-tight">
+          FF
+        </div>
+        <span class="text-base font-semibold tracking-tight text-slate-900">FairFraud</span>
+      </a>
+
+      <nav class="flex items-center gap-6 h-full text-sm font-medium text-slate-500">
+        <a href="#home" data-nav="home" class="nav-item active h-full inline-flex items-center border-b-2 border-transparent hover:text-slate-900 transition-colors">Home</a>
+        <a href="#about" data-nav="about" class="nav-item h-full inline-flex items-center border-b-2 border-transparent hover:text-slate-900 transition-colors">About</a>
+        <a href="#predict" data-nav="predict" class="nav-item h-full inline-flex items-center border-b-2 border-transparent hover:text-slate-900 transition-colors">Predict</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ==================== HOME SECTION ==================== -->
+  <section id="home" class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
+      <div class="grid lg:grid-cols-12 gap-10 items-center">
+        <div class="lg:col-span-7">
+          <p class="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-2.5">
+            An Explainable Fairness-Aware Fraud Detection System
+          </p>
+          <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-snug">
+            Multi-model fraud detection trained on 1,000,000 banking applications.
+          </h1>
+          <p class="mt-4 text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
+            Addressing severe class imbalance (89.67:1) across 27 applicant, velocity, and device signals by combining seven heterogeneous architectures with local feature attributions and demographic counterfactual checks.
+          </p>
+          <div class="mt-6 flex items-center gap-3">
+            <a href="#predict" class="px-4 py-2.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium transition-colors">
+              Evaluate Transaction
+            </a>
+            <a href="#about" class="px-4 py-2.5 rounded-md bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-sm font-medium transition-colors">
+              Dataset &amp; Architecture
+            </a>
+          </div>
+        </div>
+
+        <!-- Dataset & Model Benchmark Summary Card (From Base.csv EDA) -->
+        <div class="lg:col-span-5">
+          <div class="border border-slate-200 rounded-lg bg-slate-50/70 divide-y divide-slate-200">
+            <div class="px-4 py-3 bg-slate-100/70">
+              <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Dataset &amp; Pipeline Summary (Base.csv)</span>
+            </div>
+            <div class="px-4 py-3 flex justify-between items-center">
+              <span class="text-xs text-slate-500">Total Records</span>
+              <span class="text-xs font-mono font-medium text-slate-900 tabular-nums">1,000,000 rows &times; 32 cols</span>
+            </div>
+            <div class="px-4 py-3 flex justify-between items-center">
+              <span class="text-xs text-slate-500">Class Distribution</span>
+              <span class="text-xs font-mono font-medium text-slate-900 tabular-nums">98.90% Legit / 1.10% Fraud</span>
+            </div>
+            <div class="px-4 py-3 flex justify-between items-center">
+              <span class="text-xs text-slate-500">Imbalance Ratio</span>
+              <span class="text-xs font-mono font-medium text-slate-900 tabular-nums">89.67 : 1 (11,029 Fraud)</span>
+            </div>
+            <div class="px-4 py-3 flex justify-between items-center">
+              <span class="text-xs text-slate-500">Active Inference Schema</span>
+              <span class="text-xs font-mono font-medium text-slate-900 tabular-nums">22 Numerical + 5 Categorical</span>
+            </div>
+            <div class="px-4 py-3 flex justify-between items-center">
+              <span class="text-xs text-slate-500">Ensemble Architectures</span>
+              <span class="text-xs font-mono font-medium text-slate-900">3 GBDT + 3 Deep Tabular + GNN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== ABOUT SECTION ==================== -->
+  <section id="about" class="border-b border-slate-200 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-14">
+      <div class="max-w-2xl mb-8">
+        <h2 class="text-xl font-bold text-slate-900 tracking-tight">About the Pipeline</h2>
+        <p class="mt-1.5 text-sm text-slate-600">
+          Built on the Bank Account Fraud benchmark dataset with sentinel-aware preprocessing, multi-family inference, and fairness verification.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-5">
+        <div class="bg-white border border-slate-200 rounded-lg p-5">
+          <p class="text-xs font-mono text-slate-400 mb-1.5">01 / PREPROCESSING</p>
+          <h3 class="text-sm font-semibold text-slate-900">Sentinel-Aware Feature Engineering</h3>
+          <p class="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+            While raw columns have 0% null strings, negative sentinel codes (<code class="font-mono text-xs bg-slate-100 px-1 py-0.5 rounded">-1</code> in address months and negative balance transfers) are dynamically converted to <code class="font-mono text-xs bg-slate-100 px-1 py-0.5 rounded">NaN</code>, imputed, scaled, and one-hot encoded into a 55-dimensional tensor.
+          </p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-5">
+          <p class="text-xs font-mono text-slate-400 mb-1.5">02 / 7-MODEL ENSEMBLE</p>
+          <h3 class="text-sm font-semibold text-slate-900">Cross-Family Consensus</h3>
+          <p class="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Evaluates CatBoost, LightGBM, XGBoost, TabNet, FT-Transformer, SAINT, and GraphSAGE simultaneously—comparing tree, attention-tabular, and graph predictions against a 50.0% decision boundary.
+          </p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-5">
+          <p class="text-xs font-mono text-slate-400 mb-1.5">03 / XAI &amp; FAIRNESS</p>
+          <h3 class="text-sm font-semibold text-slate-900">Explainability &amp; Age Parity</h3>
+          <p class="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+            Measures local marginal risk contributions for each numerical input and runs counterfactual age-bracket audits (<code class="font-mono text-xs bg-slate-100 px-1 py-0.5 rounded">&lt;50</code> vs <code class="font-mono text-xs bg-slate-100 px-1 py-0.5 rounded">&ge;50</code>) to ensure predictions remain fair across applicant demographics.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PREDICT SECTION ==================== -->
+  <section id="predict" class="py-10 lg:py-14">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Header & EDA Presets -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200 mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900 tracking-tight">Fraud Prediction</h2>
+          <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Input values follow exact <code class="font-mono text-xs">Base.csv</code> feature scales and sentinel conventions (<code class="font-mono text-xs">-1</code> = missing record).</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs text-slate-500 mr-1">EDA Samples:</span>
+          <button type="button" onclick="loadSample('row0')" class="px-3 py-1.5 rounded border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium text-slate-700 transition-colors">
+            Base.csv Row #0 (Legit)
+          </button>
+          <button type="button" onclick="loadSample('row2')" class="px-3 py-1.5 rounded border border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium text-slate-700 transition-colors">
+            Base.csv Row #2 (Legit)
+          </button>
+          <button type="button" onclick="loadSample('fraud')" class="px-3 py-1.5 rounded border border-red-200 bg-red-50/50 hover:bg-red-50 text-xs font-medium text-red-700 transition-colors">
+            High-Risk Fraud Pattern
+          </button>
+        </div>
+      </div>
+
+      <!-- 2-COLUMN SPLIT LAYOUT -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- ================= LEFT COLUMN: EDA-ALIGNED FORM (5 COLS) ================= -->
+        <div class="lg:col-span-5 bg-white border border-slate-200 rounded-lg">
+          <div class="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">Applicant &amp; Transaction Features</h3>
+              <p class="text-[11px] text-slate-500">14 int64 + 8 float64 + 5 categorical</p>
+            </div>
+            <button type="button" onclick="document.getElementById('predictForm').reset()" class="text-xs text-slate-500 hover:text-slate-800 underline">
+              Reset
+            </button>
+          </div>
+
+          <form id="predictForm">
+            <div class="p-5 max-h-[680px] overflow-y-auto form-scroll space-y-6">
+
+              <!-- GROUP 1: Applicant Demographics & Financial Profile -->
+              <div>
+                <button type="button" onclick="toggleGroup('edaGroup1')" class="w-full flex items-center justify-between text-left mb-3">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">1. Applicant &amp; Credit Profile (8)</span>
+                  <span id="edaGroup1-icon" class="text-xs font-mono text-slate-400">&minus;</span>
+                </button>
+
+                <div id="edaGroup1" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <!-- income: float64 deciles [0.1 .. 0.9] -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Income Quantile <span class="text-[11px] text-slate-400 font-normal">(0.1–0.9)</span>
+                    </label>
+                    <select name="income" class="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-mono text-slate-900">
+                      <option value="0.1">0.1 (Lowest 10%)</option>
+                      <option value="0.2">0.2</option>
+                      <option value="0.3" selected>0.3</option>
+                      <option value="0.4">0.4</option>
+                      <option value="0.5">0.5 (Median)</option>
+                      <option value="0.6">0.6</option>
+                      <option value="0.7">0.7</option>
+                      <option value="0.8">0.8</option>
+                      <option value="0.9">0.9 (Top 10%)</option>
+                    </select>
+                  </div>
+
+                  <!-- customer_age: int64 decade bins [10..90] -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Customer Age <span class="text-[11px] text-slate-400 font-normal">(Decade)</span>
+                    </label>
+                    <select name="customer_age" class="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-mono text-slate-900">
+                      <option value="10">10 (10–19 yrs)</option>
+                      <option value="20">20 (20–29 yrs)</option>
+                      <option value="30">30 (30–39 yrs)</option>
+                      <option value="40" selected>40 (40–49 yrs)</option>
+                      <option value="50">50 (50–59 yrs)</option>
+                      <option value="60">60 (60–69 yrs)</option>
+                      <option value="70">70 (70–79 yrs)</option>
+                      <option value="80">80 (80–89 yrs)</option>
+                      <option value="90">90 (90+ yrs)</option>
+                    </select>
+                  </div>
+
+                  <!-- credit_risk_score: int64 [-170 .. 389] -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Credit Risk Score <span class="text-[11px] text-slate-400 font-normal">(int)</span>
+                    </label>
+                    <input type="number" step="1" min="-200" max="450" name="credit_risk_score" value="163" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- proposed_credit_limit: float64 (common tiers 200, 500, 1000, 1500, 2000) -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Proposed Credit Limit <span class="text-[11px] text-slate-400 font-normal">(200–2000)</span>
+                    </label>
+                    <input type="number" step="10" min="100" max="5000" name="proposed_credit_limit" value="1500" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- intended_balcon_amount: float64 (<0 sentinel = no transfer) -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Intended Balcon Amt <span class="text-[11px] text-slate-400 font-normal">(&lt;0 = N/A)</span>
+                    </label>
+                    <input type="number" step="0.01" min="-20" max="200" name="intended_balcon_amount" value="102.45" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- name_email_similarity: float64 [0.0 .. 1.0] -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Name-Email Similarity <span class="text-[11px] text-slate-400 font-normal">(0–1)</span>
+                    </label>
+                    <input type="number" step="0.0001" min="0" max="1" name="name_email_similarity" value="0.9865" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- employment_status: str [CA..CG] -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Employment Status <span class="text-[11px] text-slate-400 font-normal">(CA–CG)</span>
+                    </label>
+                    <select name="employment_status" class="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-mono text-slate-900">
+                      <option value="CA">CA</option>
+                      <option value="CB" selected>CB</option>
+                      <option value="CC">CC</option>
+                      <option value="CD">CD</option>
+                      <option value="CE">CE</option>
+                      <option value="CF">CF</option>
+                      <option value="CG">CG</option>
+                    </select>
+                  </div>
+
+                  <!-- payment_type: str [AA..AE] -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Payment Type <span class="text-[11px] text-slate-400 font-normal">(AA–AE)</span>
+                    </label>
+                    <select name="payment_type" class="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-mono text-slate-900">
+                      <option value="AA" selected>AA</option>
+                      <option value="AB">AB</option>
+                      <option value="AC">AC</option>
+                      <option value="AD">AD</option>
+                      <option value="AE">AE</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP 2: Residence & Address Stability -->
+              <div class="pt-4 border-t border-slate-200">
+                <button type="button" onclick="toggleGroup('edaGroup2')" class="w-full flex items-center justify-between text-left mb-3">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">2. Residence &amp; Address History (4)</span>
+                  <span id="edaGroup2-icon" class="text-xs font-mono text-slate-400">&minus;</span>
+                </button>
+
+                <div id="edaGroup2" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <!-- housing_status: str [BA..BG] -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Housing Status <span class="text-[11px] text-slate-400 font-normal">(BA–BG)</span>
+                    </label>
+                    <select name="housing_status" class="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-mono text-slate-900">
+                      <option value="BA">BA</option>
+                      <option value="BB">BB</option>
+                      <option value="BC" selected>BC</option>
+                      <option value="BD">BD</option>
+                      <option value="BE">BE</option>
+                      <option value="BF">BF</option>
+                      <option value="BG">BG</option>
+                    </select>
+                  </div>
+
+                  <!-- zip_count_4w: int64 -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      ZIP Count (4w) <span class="text-[11px] text-slate-400 font-normal">(int)</span>
+                    </label>
+                    <input type="number" step="1" min="0" max="10000" name="zip_count_4w" value="1059" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- prev_address_months_count: int64 (-1 = missing) -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Prev Address Months <span class="text-[11px] text-slate-400 font-normal">(-1 = N/A)</span>
+                    </label>
+                    <input type="number" step="1" min="-1" max="500" name="prev_address_months_count" value="-1" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- current_address_months_count: int64 (-1 = missing) -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Curr Address Months <span class="text-[11px] text-slate-400 font-normal">(-1 = N/A)</span>
+                    </label>
+                    <input type="number" step="1" min="-1" max="500" name="current_address_months_count" value="25" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP 3: Application Velocity & Network Signals -->
+              <div class="pt-4 border-t border-slate-200">
+                <button type="button" onclick="toggleGroup('edaGroup3')" class="w-full flex items-center justify-between text-left mb-3">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">3. Velocity &amp; Device Telemetry (9)</span>
+                  <span id="edaGroup3-icon" class="text-xs font-mono text-slate-400">&minus;</span>
+                </button>
+
+                <div id="edaGroup3" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <!-- velocity_6h: float64 -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Velocity 6h <span class="text-[11px] text-slate-400 font-normal">(float)</span>
+                    </label>
+                    <input type="number" step="0.01" min="-200" max="20000" name="velocity_6h" value="13096.05" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- velocity_24h: float64 -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Velocity 24h <span class="text-[11px] text-slate-400 font-normal">(float)</span>
+                    </label>
+                    <input type="number" step="0.01" min="0" max="15000" name="velocity_24h" value="7850.96" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- velocity_4w: float64 -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Velocity 4w <span class="text-[11px] text-slate-400 font-normal">(float)</span>
+                    </label>
+                    <input type="number" step="0.01" min="0" max="10000" name="velocity_4w" value="6742.08" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- bank_branch_count_8w: int64 -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Branch Count (8w) <span class="text-[11px] text-slate-400 font-normal">(int)</span>
+                    </label>
+                    <input type="number" step="1" min="0" max="3000" name="bank_branch_count_8w" value="5" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- date_of_birth_distinct_emails_4w: int64 -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      DOB Distinct Emails (4w) <span class="text-[11px] text-slate-400 font-normal">(int)</span>
+                    </label>
+                    <input type="number" step="1" min="0" max="50" name="date_of_birth_distinct_emails_4w" value="5" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- device_distinct_emails_8w: int64 (-1, 0, 1, 2) -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Device Emails (8w) <span class="text-[11px] text-slate-400 font-normal">(-1–2)</span>
+                    </label>
+                    <input type="number" step="1" min="-1" max="10" name="device_distinct_emails_8w" value="1" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- session_length_in_minutes: float64 -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Session Length <span class="text-[11px] text-slate-400 font-normal">(mins, -1=N/A)</span>
+                    </label>
+                    <input type="number" step="0.01" min="-1" max="120" name="session_length_in_minutes" value="16.22" required class="w-full rounded border border-slate-300 px-2.5 py-1.5 text-sm font-mono text-slate-900" />
+                  </div>
+
+                  <!-- source: str [INTERNET, TELEAPP] -->
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Application Source
+                    </label>
+                    <select name="source" class="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-mono text-slate-900">
+                      <option value="INTERNET" selected>INTERNET</option>
+                      <option value="TELEAPP">TELEAPP</option>
+                    </select>
+                  </div>
+
+                  <!-- device_os: str [linux, windows, macintosh, x11, other] -->
+                  <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-slate-700 mb-1">
+                      Device Operating System <span class="text-[11px] text-slate-400 font-normal">(Base.csv categories)</span>
+                    </label>
+                    <select name="device_os" class="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-mono text-slate-900">
+                      <option value="linux" selected>linux</option>
+                      <option value="windows">windows</option>
+                      <option value="macintosh">macintosh</option>
+                      <option value="x11">x11</option>
+                      <option value="other">other</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP 4: Binary Verification Flags (int64: 0 or 1) -->
+              <div class="pt-4 border-t border-slate-200">
+                <button type="button" onclick="toggleGroup('edaGroup4')" class="w-full flex items-center justify-between text-left mb-3">
+                  <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">4. Binary Verification Flags (6 &times; int64)</span>
+                  <span id="edaGroup4-icon" class="text-xs font-mono text-slate-400">&minus;</span>
+                </button>
+
+                <div id="edaGroup4" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Free Email</label>
+                    <select name="email_is_free" class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono text-slate-900">
+                      <option value="0">0 (Paid/Corp)</option>
+                      <option value="1" selected>1 (Free)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Home Phone</label>
+                    <select name="phone_home_valid" class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono text-slate-900">
+                      <option value="0" selected>0 (Invalid)</option>
+                      <option value="1">1 (Valid)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Mobile Phone</label>
+                    <select name="phone_mobile_valid" class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono text-slate-900">
+                      <option value="0">0 (Invalid)</option>
+                      <option value="1" selected>1 (Valid)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Other Cards</label>
+                    <select name="has_other_cards" class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono text-slate-900">
+                      <option value="0" selected>0 (No)</option>
+                      <option value="1">1 (Yes)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Foreign Req</label>
+                    <select name="foreign_request" class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono text-slate-900">
+                      <option value="0" selected>0 (Domestic)</option>
+                      <option value="1">1 (Foreign)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Keep Alive</label>
+                    <select name="keep_alive_session" class="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono text-slate-900">
+                      <option value="0">0 (Disabled)</option>
+                      <option value="1" selected>1 (Enabled)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Form Submit Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 rounded-b-lg">
+              <button id="submitBtn" type="submit" class="w-full py-2.5 px-4 rounded-md bg-blue-700 hover:bg-blue-800 text-white font-medium text-sm transition-colors flex items-center justify-center gap-2">
+                <span id="submitBtnText">Run 7-Model Prediction</span>
+                <svg id="submitSpinner" class="hidden w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+              </button>
+              <p id="errorBanner" class="hidden mt-2.5 text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2.5"></p>
+            </div>
+          </form>
+        </div>
+
+        <!-- ================= RIGHT COLUMN: 3 OUTPUT PANELS (7 COLS) ================= -->
+        <div class="lg:col-span-7 space-y-5">
+
+          <!-- PANEL 1: RESULT FOR ALL 7 MODELS PREDICTIONS WITH GRAPH -->
+          <div class="bg-white border border-slate-200 rounded-lg p-5">
+            <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-900">Predictions Across All 7 Models</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Individual fraud probability per model architecture</p>
+              </div>
+              <span class="text-xs font-mono text-slate-500">Threshold: 50.0%</span>
+            </div>
+
+            <div class="h-56 w-full">
+              <canvas id="modelsChart"></canvas>
+            </div>
+
+            <div id="modelScoreGrid" class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+              <div class="border border-slate-200 rounded p-2 text-center">
+                <p class="text-[11px] text-slate-500 truncate">CatBoost</p>
+                <p class="text-xs font-mono font-semibold text-slate-400 mt-0.5 tabular-nums">&mdash;</p>
+              </div>
+              <div class="border border-slate-200 rounded p-2 text-center">
+                <p class="text-[11px] text-slate-500 truncate">LightGBM</p>
+                <p class="text-xs font-mono font-semibold text-slate-400 mt-0.5 tabular-nums">&mdash;</p>
+              </div>
+              <div class="border border-slate-200 rounded p-2 text-center">
+                <p class="text-[11px] text-slate-500 truncate">XGBoost</p>
+                <p class="text-xs font-mono font-semibold text-slate-400 mt-0.5 tabular-nums">&mdash;</p>
+              </div>
+              <div class="border border-slate-200 rounded p-2 text-center">
+                <p class="text-[11px] text-slate-500 truncate">TabNet</p>
+                <p class="text-xs font-mono font-semibold text-slate-400 mt-0.5 tabular-nums">&mdash;</p>
+              </div>
+              <div class="border border-slate-200 rounded p-2 text-center">
+                <p class="text-[11px] text-slate-500 truncate">FT-Trans</p>
+                <p class="text-xs font-mono font-semibold text-slate-400 mt-0.5 tabular-nums">&mdash;</p>
+              </div>
+              <div class="border border-slate-200 rounded p-2 text-center">
+                <p class="text-[11px] text-slate-500 truncate">SAINT</p>
+                <p class="text-xs font-mono font-semibold text-slate-400 mt-0.5 tabular-nums">&mdash;</p>
+              </div>
+              <div class="border border-slate-200 rounded p-2 text-center col-span-2 sm:col-span-1">
+                <p class="text-[11px] text-slate-500 truncate">GraphSAGE</p>
+                <p class="text-xs font-mono font-semibold text-slate-400 mt-0.5 tabular-nums">&mdash;</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL 2: FINAL ENSEMBLE RESULT & COMPARISON LOGIC -->
+          <div id="verdictCard" class="bg-white border border-slate-200 rounded-lg p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-900">Final Ensemble Verdict &amp; Comparison Logic</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Decision derived by aggregating all 7 model probabilities</p>
+              </div>
+              <span id="verdictBadge" class="inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                Not Evaluated
+              </span>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="border border-slate-200 rounded p-3.5 bg-slate-50/50">
+                <p class="text-xs text-slate-500">Ensemble Mean Risk</p>
+                <p id="finalProbDisplay" class="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">&mdash;</p>
+                <div class="w-full h-1.5 bg-slate-200 rounded-full mt-2.5 overflow-hidden">
+                  <div id="probProgressBar" class="h-full bg-slate-400 transition-all duration-300" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div class="border border-slate-200 rounded p-3.5 bg-slate-50/50">
+                <p class="text-xs text-slate-500">Model Consensus</p>
+                <p id="voteBreakdownDisplay" class="text-2xl font-bold font-mono text-slate-900 mt-1 tabular-nums">&mdash; / 7</p>
+                <p id="agreementDisplay" class="text-xs text-slate-500 mt-1.5">Models &ge; 50% threshold</p>
+              </div>
+
+              <div class="border border-slate-200 rounded p-3.5 bg-slate-50/50">
+                <p class="text-xs text-slate-500 mb-1.5">Family Mean Scores</p>
+                <div class="space-y-1 text-xs">
+                  <div class="flex justify-between"><span class="text-slate-600">GBDT Models</span><span id="gbdtAvg" class="font-mono font-medium text-slate-900 tabular-nums">&mdash;</span></div>
+                  <div class="flex justify-between"><span class="text-slate-600">Deep Tabular</span><span id="deepAvg" class="font-mono font-medium text-slate-900 tabular-nums">&mdash;</span></div>
+                  <div class="flex justify-between"><span class="text-slate-600">GraphSAGE</span><span id="graphAvg" class="font-mono font-medium text-slate-900 tabular-nums">&mdash;</span></div>
+                </div>
+              </div>
+            </div>
+
+            <p id="logicExplanationText" class="mt-4 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded p-3 leading-relaxed">
+              Submit applicant parameters on the left to compare GBDT, Deep Tabular, and GraphSAGE outputs and determine whether the transaction is legitimate or fraudulent.
+            </p>
+          </div>
+
+          <!-- PANEL 3: EXPLAINABLE, FAIRNESS-AWARE REASONING -->
+          <div class="bg-white border border-slate-200 rounded-lg p-5">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3.5 border-b border-slate-100">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-900">Explainable &amp; Fairness-Aware Analysis</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Why this transaction was classified as legitimate or fraudulent</p>
+              </div>
+              <span id="fairnessBadge" class="px-2.5 py-1 rounded text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                Pending Audit
+              </span>
+            </div>
+
+            <div class="mt-4">
+              <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                <span class="font-medium text-slate-700">Top Local Feature Attributions</span>
+                <span><span class="text-red-700 font-medium">+ Increases Fraud Risk</span> &middot; <span class="text-emerald-700 font-medium">&minus; Reduces Fraud Risk</span></span>
+              </div>
+
+              <div id="xaiDriversList" class="divide-y divide-slate-100 border border-slate-200 rounded">
+                <div class="py-6 text-center text-xs text-slate-400">
+                  No evaluation data yet. Run prediction to inspect feature-level attributions.
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 border border-slate-200 rounded bg-slate-50 p-3.5">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-xs font-semibold text-slate-800">Demographic Counterfactual Audit (<code class="font-mono">customer_age</code>, <code class="font-mono">housing_status</code>, <code class="font-mono">employment_status</code>)</span>
+                <span id="cfDeltaTag" class="text-xs font-mono text-slate-600 tabular-nums">Age Shift &Delta;: &mdash;</span>
+              </div>
+              <p id="fairnessSummaryText" class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                Verifies whether swapping the applicant between younger (&lt;50) and older (&ge;50) age brackets alters the ensemble decision when holding financial and velocity behavior fixed.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="border-t border-slate-200 bg-white py-6 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+      <span>FairFraud — Explainable Fairness-Aware Fraud Detection System</span>
+    </div>
+  </footer>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script>
+    function toggleGroup(id) {
+      const el = document.getElementById(id);
+      const icon = document.getElementById(id + '-icon');
+      const isHidden = el.classList.toggle('hidden');
+      icon.textContent = isHidden ? '+' : '−';
+    }
+
+    // Exact integer vs float columns from Base.csv EDA
+    const INT_FEATURES = new Set([
+      'prev_address_months_count', 'current_address_months_count', 'customer_age',
+      'zip_count_4w', 'bank_branch_count_8w', 'date_of_birth_distinct_emails_4w',
+      'credit_risk_score', 'email_is_free', 'phone_home_valid', 'phone_mobile_valid',
+      'has_other_cards', 'foreign_request', 'keep_alive_session', 'device_distinct_emails_8w'
+    ]);
+
+    const CAT_FEATURES = new Set([
+      'payment_type', 'employment_status', 'housing_status', 'source', 'device_os'
+    ]);
+
+    // Chart.js Setup
+    const ctx = document.getElementById('modelsChart').getContext('2d');
+    const MODEL_NAMES = ['CatBoost', 'LightGBM', 'XGBoost', 'TabNet', 'FT-Transformer', 'SAINT', 'GraphSAGE'];
+
+    const modelsChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: MODEL_NAMES,
+        datasets: [{
+          label: 'Fraud Probability (%)',
+          data: [0, 0, 0, 0, 0, 0, 0],
+          backgroundColor: MODEL_NAMES.map(() => '#cbd5e1'),
+          borderRadius: 4,
+          barPercentage: 0.6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            border: { display: false },
+            grid: { color: '#f1f5f9' },
+            ticks: {
+              color: '#64748b',
+              font: { family: 'JetBrains Mono', size: 11 },
+              callback: (val) => val + '%'
+            }
+          },
+          x: {
+            border: { color: '#e2e8f0' },
+            grid: { display: false },
+            ticks: {
+              color: '#334155',
+              font: { family: 'Inter', size: 11, weight: '500' }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            titleFont: { family: 'Inter', size: 12 },
+            bodyFont: { family: 'JetBrains Mono', size: 12 },
+            padding: 10,
+            cornerRadius: 4,
+            callbacks: {
+              label: (context) => ` Probability: ${context.parsed.y.toFixed(2)}%`
+            }
+          }
+        }
+      }
+    });
+
+    // Presets directly grounded in Base.csv EDA rows & BAF fraud distributions
+    const SAMPLES = {
+      // Exact values from df.head() Row 0 (fraud_bool = 0)
+      row0: {
+        income: "0.3", name_email_similarity: 0.9865, prev_address_months_count: -1,
+        current_address_months_count: 25, customer_age: "40", intended_balcon_amount: 102.45,
+        payment_type: "AA", zip_count_4w: 1059, velocity_6h: 13096.05, velocity_24h: 7850.96,
+        velocity_4w: 6742.08, bank_branch_count_8w: 5, date_of_birth_distinct_emails_4w: 5,
+        employment_status: "CB", credit_risk_score: 163, email_is_free: "1",
+        housing_status: "BC", phone_home_valid: "0", phone_mobile_valid: "1",
+        has_other_cards: "0", proposed_credit_limit: 1500, foreign_request: "0",
+        source: "INTERNET", session_length_in_minutes: 16.22, device_os: "linux",
+        keep_alive_session: "1", device_distinct_emails_8w: 1
+      },
+      // Exact values from df.head() Row 2 (fraud_bool = 0)
+      row2: {
+        income: "0.8", name_email_similarity: 0.9967, prev_address_months_count: 9,
+        current_address_months_count: 14, customer_age: "40", intended_balcon_amount: -1.49,
+        payment_type: "AB", zip_count_4w: 1095, velocity_6h: 4471.45, velocity_24h: 5471.98,
+        velocity_4w: 5992.55, bank_branch_count_8w: 15, date_of_birth_distinct_emails_4w: 7,
+        employment_status: "CA", credit_risk_score: 89, email_is_free: "1",
+        housing_status: "BC", phone_home_valid: "0", phone_mobile_valid: "1",
+        has_other_cards: "0", proposed_credit_limit: 200, foreign_request: "0",
+        source: "INTERNET", session_length_in_minutes: 22.73, device_os: "windows",
+        keep_alive_session: "0", device_distinct_emails_8w: 1
+      },
+      // High-risk BAF fraud pattern (windows + AC payment + BA housing + high limit + foreign req + 2 device emails + low name-email sim)
+      fraud: {
+        income: "0.9", name_email_similarity: 0.0412, prev_address_months_count: -1,
+        current_address_months_count: 4, customer_age: "60", intended_balcon_amount: -1.15,
+        payment_type: "AC", zip_count_4w: 3920, velocity_6h: 9840.50, velocity_24h: 6420.10,
+        velocity_4w: 5890.00, bank_branch_count_8w: 0, date_of_birth_distinct_emails_4w: 18,
+        employment_status: "CC", credit_risk_score: 245, email_is_free: "1",
+        housing_status: "BA", phone_home_valid: "0", phone_mobile_valid: "0",
+        has_other_cards: "0", proposed_credit_limit: 2000, foreign_request: "1",
+        source: "INTERNET", session_length_in_minutes: 14.85, device_os: "windows",
+        keep_alive_session: "0", device_distinct_emails_8w: 2
+      }
+    };
+
+    function loadSample(type) {
+      const preset = SAMPLES[type];
+      const form = document.getElementById('predictForm');
+      Object.entries(preset).forEach(([key, val]) => {
+        if (form.elements[key]) {
+          form.elements[key].value = val;
+        }
+      });
+    }
+
+    document.getElementById('predictForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      const submitBtnText = document.getElementById('submitBtnText');
+      const submitSpinner = document.getElementById('submitSpinner');
+      const errorBanner = document.getElementById('errorBanner');
+
+      errorBanner.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtnText.textContent = 'Evaluating...';
+      submitSpinner.classList.remove('hidden');
+
+      const formData = new FormData(e.target);
+      const payload = {};
+
+      for (const [key, value] of formData.entries()) {
+        if (CAT_FEATURES.has(key)) {
+          payload[key] = value;
+        } else if (INT_FEATURES.has(key)) {
+          payload[key] = parseInt(value, 10);
+        } else {
+          payload[key] = parseFloat(value);
+        }
+      }
+
+      const endpoint = (window.location.port === '5000')
+        ? '/predict'
+        : 'http://127.0.0.1:5000/predict';
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const rawText = await response.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          throw new Error(`Received non-JSON response (HTTP ${response.status}). Ensure python app.py is running on port 5000.`);
+        }
+
+        if (!response.ok || data.status !== 'success') {
+          throw new Error(data.message || 'Evaluation failed.');
+        }
+
+        renderResults(data);
+      } catch (err) {
+        errorBanner.textContent = err.message;
+        errorBanner.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtnText.textContent = 'Run 7-Model Prediction';
+        submitSpinner.classList.add('hidden');
+      }
+    });
+
+    function renderResults(data) {
+      const rawScores = data.individual_scores_raw || {};
+      const chartValues = MODEL_NAMES.map(name => {
+        if (rawScores[name] !== undefined) return rawScores[name];
+        const strVal = (data.individual_scores && data.individual_scores[name]) || '0%';
+        return parseFloat(strVal.replace('%', '')) || 0;
+      });
+
+      modelsChart.data.datasets[0].data = chartValues;
+      modelsChart.data.datasets[0].backgroundColor = chartValues.map(v =>
+        v >= 50 ? '#dc2626' : '#1d4ed8'
+      );
+      modelsChart.update();
+
+      const gridEl = document.getElementById('modelScoreGrid');
+      gridEl.innerHTML = MODEL_NAMES.map((name, idx) => {
+        const val = chartValues[idx];
+        const isHigh = val >= 50;
+        const shortName = name === 'FT-Transformer' ? 'FT-Trans' : name;
+        return `
+          <div class="border ${isHigh ? 'border-red-200 bg-red-50/40' : 'border-slate-200 bg-slate-50/50'} rounded p-2 text-center">
+            <p class="text-[11px] text-slate-600 truncate" title="${name}">${shortName}</p>
+            <p class="text-xs font-mono font-semibold mt-0.5 tabular-nums ${isHigh ? 'text-red-700' : 'text-slate-900'}">${val.toFixed(1)}%</p>
+          </div>
+        `;
+      }).join('');
+
+      const isFraud = data.predicted_class === 'Fraudulent';
+      const finalPct = data.fraud_probability_raw !== undefined
+        ? data.fraud_probability_raw
+        : parseFloat(data.fraud_probability.replace('%', ''));
+
+      const verdictBadge = document.getElementById('verdictBadge');
+      if (isFraud) {
+        verdictBadge.className = 'inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-red-50 text-red-700 border border-red-200';
+        verdictBadge.textContent = 'Fraudulent';
+      } else {
+        verdictBadge.className = 'inline-flex items-center px-3 py-1 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
+        verdictBadge.textContent = 'Legitimate';
+      }
+
+      document.getElementById('finalProbDisplay').textContent = data.fraud_probability;
+      const bar = document.getElementById('probProgressBar');
+      bar.style.width = `${Math.min(100, Math.max(2, finalPct))}%`;
+      bar.className = `h-full transition-all duration-300 ${isFraud ? 'bg-red-600' : 'bg-emerald-600'}`;
+
+      if (data.ensemble_logic) {
+        const logic = data.ensemble_logic;
+        document.getElementById('voteBreakdownDisplay').textContent = `${logic.fraud_votes} / ${logic.total_models}`;
+        document.getElementById('agreementDisplay').textContent = `${logic.agreement_level} (SD: ${logic.std_deviation_pct}%)`;
+        document.getElementById('gbdtAvg').textContent = `${logic.gbdt_family_pct}%`;
+        document.getElementById('deepAvg').textContent = `${logic.deep_tabular_family_pct}%`;
+        document.getElementById('graphAvg').textContent = `${logic.graph_family_pct}%`;
+
+        document.getElementById('logicExplanationText').innerHTML =
+          `<span class="font-semibold text-slate-800">Comparison Summary:</span> ` +
+          `${logic.fraud_votes} of ${logic.total_models} models scored at or above the 50.0% threshold, yielding an ensemble mean of ` +
+          `<span class="font-mono font-medium text-slate-900">${data.fraud_probability}</span> ` +
+          `(GBDT mean: ${logic.gbdt_family_pct}%, Deep Tabular mean: ${logic.deep_tabular_family_pct}%, GraphSAGE: ${logic.graph_family_pct}%). ` +
+          `Final classification: <span class="font-semibold ${isFraud ? 'text-red-700' : 'text-emerald-700'}">${data.predicted_class}</span>.`;
+      } else {
+        const fraudCount = chartValues.filter(v => v >= 50).length;
+        document.getElementById('voteBreakdownDisplay').textContent = `${fraudCount} / 7`;
+        document.getElementById('logicExplanationText').textContent =
+          `${fraudCount} out of 7 models exceeded the 50.0% threshold with an ensemble average of ${data.fraud_probability}, classifying the transaction as ${data.predicted_class}.`;
+      }
+
+      const xaiContainer = document.getElementById('xaiDriversList');
+      if (data.explanations && data.explanations.length > 0) {
+        const maxImpact = Math.max(...data.explanations.map(e => Math.abs(e.impact)), 1);
+        xaiContainer.innerHTML = data.explanations.map(item => {
+          const isRiskUp = item.impact >= 0;
+          const widthPct = Math.min(100, Math.max(4, (Math.abs(item.impact) / maxImpact) * 100));
+          const sign = isRiskUp ? '+' : '';
+          return `
+            <div class="p-3 bg-white">
+              <div class="flex items-center justify-between text-xs mb-1.5">
+                <div>
+                  <span class="font-medium text-slate-800">${item.label}</span>
+                  <span class="ml-1.5 text-slate-400 font-mono">[${item.value}]</span>
+                </div>
+                <span class="font-mono font-medium tabular-nums ${isRiskUp ? 'text-red-700' : 'text-emerald-700'}">
+                  ${sign}${item.impact.toFixed(2)}%
+                </span>
+              </div>
+              <div class="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                <div class="h-full ${isRiskUp ? 'bg-red-600' : 'bg-emerald-600'}" style="width: ${widthPct}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      if (data.fairness_audit) {
+        const fa = data.fairness_audit;
+        const badge = document.getElementById('fairnessBadge');
+        badge.textContent = fa.fairness_status;
+        badge.className = fa.decision_invariant
+          ? 'px-2.5 py-1 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200'
+          : 'px-2.5 py-1 rounded text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200';
+
+        document.getElementById('cfDeltaTag').textContent = `Age Shift Δ: ${fa.counterfactual_age_delta}%`;
+        document.getElementById('fairnessSummaryText').textContent = fa.summary;
+      }
+    }
+
+    const sectionIds = ['home', 'about', 'predict'];
+    window.addEventListener('scroll', () => {
+      let activeId = 'home';
+      sectionIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && window.scrollY >= el.offsetTop - 120) {
+          activeId = id;
+        }
+      });
+      document.querySelectorAll('.nav-item').forEach(link => {
+        link.classList.toggle('active', link.dataset.nav === activeId);
+      });
+    });
+  </script>
+</body>
+</html>
